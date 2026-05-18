@@ -1,0 +1,2 @@
+# 本專案只使用 Python 標準函式庫 (urllib, json, datetime…)
+# 保留此檔以便 CI 安裝；若未來加入 pandas/requests 再列在這裡。

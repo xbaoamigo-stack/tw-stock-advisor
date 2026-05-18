@@ -3,222 +3,489 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>台股型態分析 | 2026-05-13</title>
+  <title>📈 台股型態分析</title>
   <style>
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --surface-2: #f0f1f5;
+      --text: #1f2330;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79,70,229,0.1);
+      --buy: #10b981;
+      --sell: #ef4444;
+      --watch: #f59e0b;
+      --up: #ef4444;   /* 台股慣例: 紅漲 */
+      --down: #10b981; /* 綠跌 */
+      --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    [data-theme="dark"] {
+      --bg: #0f1115;
+      --surface: #1a1d24;
+      --surface-2: #232732;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #2a2e3a;
+      --accent: #818cf8;
+      --accent-soft: rgba(129,140,248,0.15);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; border-radius: 10px; margin-bottom: 30px; }
-    h1 { font-size: 2em; margin-bottom: 10px; }
-    .subtitle { opacity: 0.9; }
-    .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .card h2 { color: #667eea; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
-    .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
-    .stock-item:last-child { border-bottom: none; }
-    .stock-info { flex: 1; }
-    .stock-symbol { font-weight: bold; font-size: 1.2em; }
-    .stock-name { color: #666; margin-left: 10px; }
-    .stock-price { text-align: right; }
-    .signal { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; font-weight: bold; }
-    .signal-buy { background: #10b981; }
-    .signal-sell { background: #ef4444; }
-    .signal-watch { background: #f59e0b; }
-    .details { margin-top: 10px; font-size: 0.9em; color: #666; }
-    .details span { margin-right: 15px; }
-    footer { text-align: center; padding: 30px; color: #666; font-size: 0.9em; }
-    @media (max-width: 768px) { .stock-item { flex-direction: column; align-items: flex-start; } .stock-price { text-align: left; margin-top: 10px; } }
+    html, body { background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Segoe UI", Roboto, sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #fff;
+      padding: 24px 20px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.6em; letter-spacing: 0.5px; }
+    header .subtitle { opacity: 0.85; font-size: 0.9em; margin-top: 4px; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .toolbar select, .toolbar button {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+    .toolbar select option { color: #1f2330; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+    .summary-card .label { font-size: 0.8em; color: var(--muted); margin-bottom: 6px; }
+    .summary-card .value { font-size: 1.5em; font-weight: 700; }
+    .value.buy { color: var(--buy); }
+    .value.sell { color: var(--sell); }
+    .value.watch { color: var(--watch); }
+
+    .industry-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .industry-header {
+      padding: 14px 18px;
+      background: var(--surface-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .industry-header h2 {
+      font-size: 1.05em;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .industry-header .count {
+      font-size: 0.8em;
+      color: var(--muted);
+      background: var(--accent-soft);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .industry-body { display: block; }
+    .industry-section.collapsed .industry-body { display: none; }
+    .chevron { transition: transform 0.2s ease; }
+    .industry-section.collapsed .chevron { transform: rotate(-90deg); }
+
+    .stock-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 0;
+    }
+    .stock-card {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stock-card:hover { background: var(--surface-2); }
+    .stock-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .stock-id {
+      font-weight: 700;
+      font-size: 1.05em;
+    }
+    .stock-name { color: var(--muted); font-size: 0.9em; margin-left: 4px; }
+    .stock-price {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .change.up { color: var(--up); }
+    .change.down { color: var(--down); }
+    .stock-mid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .signal {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+    .signal-買進 { background: var(--buy); }
+    .signal-賣出 { background: var(--sell); }
+    .signal-觀望 { background: var(--watch); }
+    .pattern-tag {
+      font-size: 0.8em;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .conf-tag {
+      font-size: 0.75em;
+      color: var(--muted);
+    }
+    .stock-bot {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      font-size: 0.8em;
+      color: var(--muted);
+    }
+    .stock-bot .k { color: var(--muted); }
+    .stock-bot .v { color: var(--text); font-variant-numeric: tabular-nums; }
+    .vol-bar {
+      font-size: 0.78em;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .vol-bar .badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .empty, .loading, .error {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .error { color: var(--sell); }
+
+    footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+      font-size: 0.85em;
+    }
+    footer .disclaimer {
+      margin-top: 10px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      font-size: 0.85em;
+    }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.3em; }
+      .stock-list { grid-template-columns: 1fr; }
+      .stock-card { border-right: none; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>📈 台股型態分析</h1>
-      <p class="subtitle">K 線型態學 · 量價結構自動分析 | 2026-05-13</p>
+      <div>
+        <h1>📈 台股型態分析</h1>
+        <div class="subtitle" id="subtitle">載入中…</div>
+      </div>
+      <div class="toolbar">
+        <label style="font-size:0.85em;opacity:0.9;">日期
+          <select id="date-select"><option>—</option></select>
+        </label>
+        <label style="font-size:0.85em;opacity:0.9;">訊號
+          <select id="signal-filter">
+            <option value="all">全部</option>
+            <option value="買進">買進</option>
+            <option value="賣出">賣出</option>
+            <option value="觀望">觀望</option>
+          </select>
+        </label>
+        <button id="theme-toggle" title="切換主題">🌗</button>
+      </div>
     </header>
-    
-    <div class="card">
-      <h2>📊 大盤觀點</h2>
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">加權指數</span>
-          <span class="signal signal-watch">觀望</span>
-        </div>
-        <p>型態：W 底</p>
-      </div>
-    </div>
-    
-    
-    <div class="card">
-      <h2>🟢 買進訊號</h2>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2454</span>
-          <span class="stock-name">聯發科</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：1239.38元</span>
-            <span>停損：1177.41元</span>
-            <span>目標：1125.8元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>1489.08元</div>
-          <div style="color: #10b981">+0.79%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">3008</span>
-          <span class="stock-name">大立光</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：2541.15元</span>
-            <span>停損：2414.09元</span>
-            <span>目標：2553.4元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>2632.31元</div>
-          <div style="color: #ef4444">-1.39%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">1301</span>
-          <span class="stock-name">台塑</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：97.64元</span>
-            <span>停損：92.76元</span>
-            <span>目標：101.3元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>104.24元</div>
-          <div style="color: #10b981">+1.34%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">1303</span>
-          <span class="stock-name">南亞</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：80.66元</span>
-            <span>停損：76.63元</span>
-            <span>目標：79.72元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>90.66元</div>
-          <div style="color: #10b981">+1.5%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2881</span>
-          <span class="stock-name">富邦金</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：60.46元</span>
-            <span>停損：57.44元</span>
-            <span>目標：56.7元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>67.66元</div>
-          <div style="color: #ef4444">-0.37%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2882</span>
-          <span class="stock-name">國泰金</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：56.46元</span>
-            <span>停損：53.64元</span>
-            <span>目標：55.9元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>58.22元</div>
-          <div style="color: #ef4444">-0.03%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2303</span>
-          <span class="stock-name">聯電</span>
-          <div class="details">
-            <span>型態：W 底</span>
-            <span>頸線：114.34元</span>
-            <span>停損：108.62元</span>
-            <span>目標：104.93元</span>
-          </div>
-        </div>
-        <div class="stock-price">
-          <div>135.11元</div>
-          <div style="color: #ef4444">-0.18%</div>
-        </div>
-      </div>
-      
-    </div>
-    
-    
-    
-    <div class="card">
-      <h2>🟡 觀望清單</h2>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2330</span>
-          <span class="stock-name">台積電</span>
-          <div class="details"><span>W 底</span></div>
-        </div>
-        <div class="stock-price">
-          <div>823.42元</div>
-          <div style="color: #ef4444">-1.2%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">2317</span>
-          <span class="stock-name">鴻海</span>
-          <div class="details"><span>W 底</span></div>
-        </div>
-        <div class="stock-price">
-          <div>189.26元</div>
-          <div style="color: #ef4444">-0.76%</div>
-        </div>
-      </div>
-      
-      <div class="stock-item">
-        <div class="stock-info">
-          <span class="stock-symbol">3711</span>
-          <span class="stock-name">日月光投控</span>
-          <div class="details"><span>W 底</span></div>
-        </div>
-        <div class="stock-price">
-          <div>144.36元</div>
-          <div style="color: #10b981">+1.3%</div>
-        </div>
-      </div>
-      
-    </div>
-    
+
+    <section class="summary" id="summary"></section>
+    <main id="main"><div class="loading">載入中…</div></main>
+
     <footer>
-      <p>⚠️ 以上僅供參考，投資請自負盈虧</p>
-      <p>數據來源：台灣證券交易所 | 分析方法：K 線型態學 + 量價結構</p>
+      <div>資料來源：FinMind · 每日 08:30 (Asia/Taipei) 自動更新</div>
+      <div class="disclaimer">
+        ⚠️ 免責聲明：本站僅為技術分析教學/研究用途，所有訊號為演算法依公開歷史資料偵測之型態結果，
+        <strong>不構成任何投資建議或買賣依據</strong>。投資有風險，請自行評估並承擔損益。
+      </div>
+      <div style="margin-top:10px;font-size:0.8em;">
+        <a href="https://github.com/xbaoamigo-stack/tw-stock-advisor" style="color:var(--accent);">GitHub Repo</a>
+      </div>
     </footer>
   </div>
+
+<script>
+const SIGNAL_ORDER = { '買進': 0, '觀望': 1, '賣出': 2 };
+
+function $(s, root=document) { return root.querySelector(s); }
+function el(tag, attrs={}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids) {
+    if (k == null) continue;
+    e.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+  }
+  return e;
+}
+function fmt(n, d=2) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+async function loadData(date) {
+  const url = date && date !== 'latest' ? `data/${date}.json` : 'data/latest.json';
+  const res = await fetch(url + '?t=' + Date.now());
+  if (!res.ok) throw new Error('找不到資料：' + url);
+  return res.json();
+}
+
+async function loadIndex() {
+  // 嘗試讀 data/index.json (檔案清單)；若無，就只用 latest
+  try {
+    const res = await fetch('data/index.json?t=' + Date.now());
+    if (res.ok) return res.json();
+  } catch (_) {}
+  return null;
+}
+
+function renderSummary(payload) {
+  const root = $('#summary'); root.innerHTML = '';
+  const s = payload.stats || { total: 0, buy: 0, sell: 0, watch: 0 };
+  const idx = payload.index || {};
+  const items = [
+    { label: '掃描檔數', value: s.total, cls: '' },
+    { label: '買進訊號', value: s.buy,   cls: 'buy' },
+    { label: '賣出訊號', value: s.sell,  cls: 'sell' },
+    { label: '觀望',     value: s.watch, cls: 'watch' },
+    { label: '大盤偏向', value: idx.signal || '—', cls: '' },
+  ];
+  for (const it of items) {
+    root.appendChild(el('div', { class:'summary-card' },
+      el('div', { class:'label' }, it.label),
+      el('div', { class:'value ' + it.cls }, String(it.value))
+    ));
+  }
+}
+
+function groupByIndustry(stocks) {
+  const map = new Map();
+  for (const s of stocks) {
+    const key = s.industry || '其他';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(s);
+  }
+  // 排序：先依「同產業有買進訊號的數量」降序，再依名稱
+  return [...map.entries()]
+    .map(([k,v]) => {
+      v.sort((a,b) => {
+        const da = SIGNAL_ORDER[a.pattern?.signal] ?? 1;
+        const db = SIGNAL_ORDER[b.pattern?.signal] ?? 1;
+        if (da !== db) return da - db;
+        return (b.volumeRatio||0) - (a.volumeRatio||0);
+      });
+      return { industry: k, stocks: v };
+    })
+    .sort((a,b) => {
+      const ba = a.stocks.filter(s => s.pattern?.signal === '買進').length;
+      const bb = b.stocks.filter(s => s.pattern?.signal === '買進').length;
+      if (ba !== bb) return bb - ba;
+      return a.industry.localeCompare(b.industry, 'zh-Hant');
+    });
+}
+
+function renderStockCard(s) {
+  const p = s.pattern || {};
+  const v = s.volumePrice || {};
+  const chgClass = (s.change > 0) ? 'up' : (s.change < 0 ? 'down' : '');
+  const chgSign  = (s.change > 0) ? '+' : '';
+
+  const detailsRow = (label, val) => el('div', {},
+    el('div', { class:'k' }, label),
+    el('div', { class:'v' }, val ?? '—'));
+
+  return el('div', { class:'stock-card' },
+    el('div', { class:'stock-top' },
+      el('div', {},
+        el('span', { class:'stock-id' }, s.symbol),
+        el('span', { class:'stock-name' }, s.name || '')
+      ),
+      el('div', { class:'stock-price' },
+        el('span', {}, fmt(s.currentPrice)),
+        el('span', { class:'change ' + chgClass }, ` (${chgSign}${fmt(s.change,2)}%)`)
+      )
+    ),
+    el('div', { class:'stock-mid' },
+      el('span', { class:'signal signal-' + (p.signal||'觀望') }, p.signal || '觀望'),
+      el('span', { class:'pattern-tag' }, p.type || '—'),
+      p.confidence ? el('span', { class:'conf-tag' }, '信心：' + p.confidence) : null
+    ),
+    el('div', { class:'stock-bot' },
+      detailsRow('頸線', p.neckline != null ? fmt(p.neckline) : '—'),
+      detailsRow('目標', p.target   != null ? fmt(p.target)   : '—'),
+      detailsRow('停損', p.stopLoss != null ? fmt(p.stopLoss) : '—'),
+    ),
+    el('div', { class:'vol-bar' },
+      el('span', { class:'badge' }, '量比 ' + fmt(s.volumeRatio,2)),
+      v.mainForce ? el('span', { class:'badge' }, v.mainForce) : null,
+      v.divergence && v.divergence !== '正常' ? el('span', { class:'badge' }, v.divergence) : null,
+      s.subIndustry ? el('span', { class:'badge' }, s.subIndustry) : null
+    )
+  );
+}
+
+function renderMain(payload, filter='all') {
+  const root = $('#main'); root.innerHTML = '';
+  if (!payload || !payload.stocks?.length) {
+    root.appendChild(el('div', { class:'empty' }, '尚無資料'));
+    return;
+  }
+  let stocks = payload.stocks;
+  if (filter !== 'all') stocks = stocks.filter(s => s.pattern?.signal === filter);
+  if (!stocks.length) {
+    root.appendChild(el('div', { class:'empty' }, '此分類下沒有符合的標的'));
+    return;
+  }
+  const groups = groupByIndustry(stocks);
+  for (const g of groups) {
+    const section = el('section', { class:'industry-section' });
+    const header = el('div', { class:'industry-header' },
+      el('h2', {},
+        el('span', { class:'chevron' }, '▾'),
+        document.createTextNode(' ' + g.industry)
+      ),
+      el('span', { class:'count' }, g.stocks.length + ' 檔')
+    );
+    header.addEventListener('click', () => section.classList.toggle('collapsed'));
+    section.appendChild(header);
+    const body = el('div', { class:'industry-body' });
+    const list = el('div', { class:'stock-list' });
+    g.stocks.forEach(s => list.appendChild(renderStockCard(s)));
+    body.appendChild(list);
+    section.appendChild(body);
+    root.appendChild(section);
+  }
+}
+
+function setSubtitle(payload) {
+  const sub = $('#subtitle');
+  if (!payload) { sub.textContent = ''; return; }
+  const idx = payload.index || {};
+  sub.textContent = `${payload.date}　${idx.reason || ''}`;
+}
+
+async function refresh(date) {
+  try {
+    $('#main').innerHTML = '<div class="loading">載入中…</div>';
+    const data = await loadData(date);
+    setSubtitle(data);
+    renderSummary(data);
+    const filter = $('#signal-filter').value;
+    renderMain(data, filter);
+    window.__currentData = data;
+  } catch (e) {
+    $('#main').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+}
+
+(async function init() {
+  // theme
+  applyTheme(localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  $('#theme-toggle').addEventListener('click', () => {
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // 日期下拉：最新 + index.json (若有)
+  const sel = $('#date-select');
+  sel.innerHTML = '<option value="latest">最新</option>';
+  const idx = await loadIndex();
+  if (idx && Array.isArray(idx.dates)) {
+    idx.dates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      sel.appendChild(opt);
+    });
+  }
+  sel.addEventListener('change', () => refresh(sel.value));
+  $('#signal-filter').addEventListener('change', () => {
+    if (window.__currentData) renderMain(window.__currentData, $('#signal-filter').value);
+  });
+
+  await refresh('latest');
+})();
+</script>
 </body>
 </html>

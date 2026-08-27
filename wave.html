@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌊 阿兔簡易波浪 + 外資成本</title>
+  <style>
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --surface-2: #f0f1f5;
+      --text: #1f2330;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79,70,229,0.1);
+      --buy: #10b981;
+      --sell: #ef4444;
+      --watch: #f59e0b;
+      --up: #ef4444;
+      --down: #10b981;
+      --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    [data-theme="dark"] {
+      --bg: #0f1115;
+      --surface: #1a1d24;
+      --surface-2: #232732;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #2a2e3a;
+      --accent: #818cf8;
+      --accent-soft: rgba(129,140,248,0.15);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Segoe UI", Roboto, sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .container { max-width: 1080px; margin: 0 auto; padding: 16px; }
+    header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #fff;
+      padding: 24px 20px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.5em; letter-spacing: 0.5px; }
+    header .subtitle { opacity: 0.85; font-size: 0.9em; margin-top: 4px; }
+    .nav-link { color: #fff; opacity: 0.85; font-size: 0.85em; text-decoration: underline; }
+    .nav-link:hover { opacity: 1; }
+
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .toolbar button {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .panel h2 {
+      font-size: 1.05em;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel h2 .badge {
+      font-size: 0.7em;
+      color: var(--muted);
+      background: var(--surface-2);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: 0.8em;
+      color: var(--muted);
+    }
+    .field input, .field select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.95em;
+      font-family: inherit;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary:hover { filter: brightness(1.1); }
+    button.primary:disabled { opacity: 0.6; cursor: wait; }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      cursor: pointer;
+    }
+    button.ghost:hover { background: var(--accent-soft); }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .result-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .result-card h3 {
+      font-size: 0.9em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .result-card .big {
+      font-size: 1.6em;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .result-card .sub {
+      font-size: 0.8em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .result-card.target {
+      background: linear-gradient(135deg, var(--accent-soft), var(--surface-2));
+      border-color: var(--accent);
+    }
+    .result-card.consensus {
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), var(--surface-2));
+      border-color: var(--buy);
+    }
+    .result-card.consensus .big { color: var(--buy); }
+
+    .targets-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .target-cell {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .target-cell .mul { font-size: 0.75em; color: var(--muted); }
+    .target-cell .val {
+      font-size: 1.3em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+    }
+    .target-cell.hit { border-color: var(--buy); }
+    .target-cell.hit .val { color: var(--buy); }
+
+    .kv {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 0.9em;
+    }
+    .kv .k { color: var(--muted); }
+    .kv .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    .method {
+      font-size: 0.85em;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.6;
+    }
+    .method code {
+      background: var(--bg);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+    .method b { color: var(--text); }
+
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      margin: 8px 0;
+    }
+    .status.loading { background: var(--accent-soft); color: var(--accent); }
+    .status.error { background: rgba(239,68,68,0.12); color: var(--sell); }
+    .status.warn { background: rgba(245,158,11,0.12); color: var(--watch); }
+    .status.success { background: rgba(16,185,129,0.12); color: var(--buy); }
+
+    .loading-dot {
+      display: inline-block;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      color: var(--muted);
+      font-size: 0.85em;
+    }
+    footer .disclaimer {
+      margin-top: 10px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.25em; }
+      .targets-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>🌊 阿兔簡易波浪 + 外資成本</h1>
+        <div class="subtitle">輸入股票代號，算三檔目標 + 攤平建議（非投資建議）</div>
+      </div>
+      <div class="toolbar">
+        <a class="nav-link" href="./index.html">← 回型態分析主頁</a>
+        <button id="theme-toggle" title="切換主題">🌗</button>
+      </div>
+    </header>
+
+    <!-- ============ 輸入區 ============ -->
+    <section class="panel">
+      <h2>📊 個股設定 <span class="badge">必填</span></h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="ticker">股票代號</label>
+          <input id="ticker" type="text" inputmode="numeric" pattern="[0-9]{4}"
+                 placeholder="例如 3675" value="3675" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="stockName">股票名稱（選填，顯示用）</label>
+          <input id="stockName" type="text" placeholder="例如 德微" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="window">區間天數</label>
+          <select id="window">
+            <option value="30">30 日</option>
+            <option value="60" selected>60 日</option>
+            <option value="90">90 日</option>
+          </select>
+        </div>
+      </div>
+
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer;color:var(--muted);font-size:0.85em;">
+          ⚙️ 進階：自訂基準價 / 區間低點（不填就用 MA5 跟區間最低）
+        </summary>
+        <div class="form-grid" style="margin-top:10px;">
+          <div class="field">
+            <label for="highCustom">基準價（覆寫 5日均）</label>
+            <input id="highCustom" type="number" step="0.01" placeholder="例 269">
+          </div>
+          <div class="field">
+            <label for="lowCustom">區間低點（覆寫自動）</label>
+            <input id="lowCustom" type="number" step="0.01" placeholder="例 194.5">
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 攤平計算 ============ -->
+    <section class="panel">
+      <h2>💰 攤平計算 <span class="badge">選填</span></h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="hold">持有股數</label>
+          <input id="hold" type="number" min="0" placeholder="例 100">
+        </div>
+        <div class="field">
+          <label for="cost">持有均價（元）</label>
+          <input id="cost" type="number" step="0.01" placeholder="例 400">
+        </div>
+        <div class="field">
+          <label for="priceNow">目前價（元，不填就用收盤）</label>
+          <input id="priceNow" type="number" step="0.01" placeholder="例 283">
+        </div>
+        <div class="field">
+          <label for="avgTarget">目標解套價（元）</label>
+          <input id="avgTarget" type="number" step="0.01" placeholder="例 370">
+        </div>
+      </div>
+      <div class="method" style="margin-top:12px;">
+        公式：<code>加碼股數 = (目標 − 既有成本) × 持有股數 ÷ (目前價 − 目標)</code>
+        （目標需 &lt; 目前價，且需 &lt; 既有成本，才能把均價壓低）
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="primary" id="runBtn">🚀 計算</button>
+      <button class="ghost" id="resetBtn">重置</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <!-- ============ 方法說明 ============ -->
+    <section class="panel">
+      <h2>📐 方法說明</h2>
+      <div class="method">
+        <p><b>① 波浪目標：</b>取基準價（5 日均或近期高）減去區間低點得到 Δ，再加 Δ × 1.5 / 2 / 2.5，得到三檔目標價。</p>
+        <p style="margin-top:6px;"><b>② 外資成本目標：</b>用 FinMind 三大法人資料，算近期 N 天外資淨買日的「收盤價 × 淨買張數」加權平均（VWAP proxy），當作外資加碼成本。再乘 1.2 / 1.4 / 1.7 得到三檔目標。</p>
+        <p style="margin-top:6px;"><b>③ 兩條腿交叉：</b>若波浪目標與外資目標有任一對差距 &lt; 2%，視為「共識價」，那個位階最值得信。</p>
+        <p style="margin-top:6px;"><b>④ 攤平：</b>已知持股成本與目前價，反推需加碼多少股才能把均價壓到目標價（公式見上方）。</p>
+        <p style="margin-top:8px;color:var(--muted);font-size:0.9em;">
+          來源：學習團學員 阿兔（2026-08-27）。資料源 FinMind 公開 API。
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="disclaimer">
+        ⚠️ <b>免責聲明：</b>本站僅為技術分析教學/研究用途，所有數字依公開歷史資料計算，
+        <b>不構成任何投資建議或買賣依據</b>。投資有風險，請自行評估並承擔損益。
+      </div>
+      <div style="margin-top:10px;">
+        <a class="nav-link" href="./index.html">← 回型態分析主頁</a>
+      </div>
+    </footer>
+  </div>
+
+<script>
+const FINMIND = 'https://api.finmindtrade.com/api/v4/data';
+const WAVE_MUL = [1.5, 2.0, 2.5];
+const FOREIGN_MUL = [1.2, 1.4, 1.7];
+const FOREIGN_NAMES = new Set(['Foreign_Investor', 'Foreign_Dealer_Self']);
+
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+function el(tag, attrs={}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) {
+    if (k == null) continue;
+    e.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+  }
+  return e;
+}
+function fmt(n, d=2) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+function isoDate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+
+// ---- FinMind ----
+async function fetchFinmind(dataset, stockId, start, end) {
+  const url = `${FINMIND}?dataset=${dataset}&data_id=${stockId}&start_date=${start}&end_date=${end}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FinMind HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.status !== 200) throw new Error(json.msg || 'FinMind 錯誤');
+  return json.data || [];
+}
+
+async function fetchPrice(ticker, days) {
+  const end = new Date();
+  const start = new Date(end.getTime() - (days + 30) * 86400 * 1000);
+  const rows = await fetchFinmind('TaiwanStockPrice', ticker, isoDate(start), isoDate(end));
+  return rows
+    .filter(r => (r.open || r.close) && (r.open !== 0 || r.close !== 0))
+    .map(r => ({
+      date: r.date,
+      close: +r.close || 0,
+      high: +r.max || 0,
+      low: +r.min || 0,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function fetchInstitutional(ticker, days) {
+  const end = new Date();
+  const start = new Date(end.getTime() - (days + 30) * 86400 * 1000);
+  return fetchFinmind('TaiwanStockInstitutionalInvestorsBuySell', ticker, isoDate(start), isoDate(end));
+}
+
+// ---- 算法 ----
+function recentBaseline(candles, days=5) {
+  const closes = candles.map(c => c.close).filter(c => c > 0);
+  if (!closes.length) throw new Error('沒有價格資料');
+  const ma = closes.slice(-days).reduce((a,b) => a+b, 0) / Math.min(days, closes.length);
+  const window = Math.min(60, closes.length);
+  return {
+    ma5: ma,
+    lo: Math.min(...closes.slice(-window)),
+    hi: Math.max(...closes.slice(-window)),
+    last: closes[closes.length - 1],
+  };
+}
+
+function computeForeignCost(priceByDate, inst, windowDays) {
+  const cutoff = new Date(Date.now() - windowDays * 86400 * 1000).toISOString().slice(0, 10);
+  const byDate = {};
+  for (const row of inst) {
+    if (!FOREIGN_NAMES.has(row.name)) continue;
+    if (row.date < cutoff) continue;
+    const slot = byDate[row.date] || (byDate[row.date] = { buy: 0, sell: 0 });
+    slot.buy += +(row.buy || 0);
+    slot.sell += +(row.sell || 0);
+  }
+  let costNum = 0, netBuyTotal = 0, netBuyDays = 0;
+  for (const [d, s] of Object.entries(byDate)) {
+    const close = priceByDate[d];
+    if (!close) continue;
+    const net = s.buy - s.sell;
+    if (net > 0) {
+      costNum += close * net;
+      netBuyTotal += net;
+      netBuyDays++;
+    }
+  }
+  if (netBuyTotal <= 0) return { cost: null, netBuyDays: 0, netBuyLots: 0 };
+  return { cost: costNum / netBuyTotal, netBuyDays, netBuyLots: Math.round(netBuyTotal), windowDays };
+}
+
+function avgDownPlan(hold, cost, price, target) {
+  if (target >= cost) return { ok: false, note: `目標價 ${target} ≥ 既有成本 ${cost}，不需要攤平（攤平是為了拉低均價）` };
+  if (price >= target) return { ok: false, note: `目前價 ${price} ≥ 目標價 ${target}，加碼也壓不到 ${target}（考慮賣出或換更低目標）` };
+  const x = (target - cost) * hold / (price - target);
+  const add = Math.round(x + 0.499);
+  const newTotal = hold * cost + add * price;
+  const newShares = hold + add;
+  const newAvg = newTotal / newShares;
+  return {
+    ok: true,
+    addShares: add,
+    addCostTotal: newTotal - hold * cost,
+    resultingAvgCost: newAvg,
+    resultingShares: newShares,
+    totalInvestment: newTotal,
+    gap: price - target,
+  };
+}
+
+function findOverlap(waves, foreigns, tol=0.02) {
+  const out = [];
+  for (const w of waves) {
+    for (const f of foreigns) {
+      if (Math.abs(w - f) / Math.max(w, f, 1) < tol) {
+        out.push({ wave: w, foreign: f, consensus: Math.round((w + f) / 2) });
+      }
+    }
+  }
+  return out;
+}
+
+// ---- Render ----
+function status(msg, cls='') {
+  const box = $('#status');
+  box.innerHTML = `<div class="status ${cls}">${msg}</div>`;
+}
+
+function clearStatus() { $('#status').innerHTML = ''; }
+
+function renderResults(payload) {
+  const r = $('#results');
+  r.innerHTML = '';
+  const waveTargets = payload.waveTargets.map((v, i) => ({ mul: WAVE_MUL[i], val: v }));
+  const fTargets = payload.foreignCost.cost
+    ? payload.foreignTargets.map((v, i) => ({ mul: FOREIGN_MUL[i], val: v }))
+    : [];
+  const hits = new Set(payload.overlap.map(o => o.consensus));
+
+  // ---- 個股總覽 ----
+  const overview = el('section', { class: 'panel' },
+    el('h2', {}, '📈 ', el('span', {}, payload.name), ` (${payload.ticker}) `,
+      el('span', { class: 'badge' }, payload.asOfDate)),
+    el('div', { class: 'result-grid' },
+      el('div', { class: 'result-card' },
+        el('h3', {}, '最近收盤'),
+        el('div', { class: 'big' }, fmt(payload.lastClose)),
+        el('div', { class: 'sub' }, '區間 ' + payload.windowDays + ' 日')),
+      el('div', { class: 'result-card' },
+        el('h3', {}, '基準價（' + payload.baseline.source + '）'),
+        el('div', { class: 'big' }, fmt(payload.baseline.value)),
+        el('div', { class: 'sub' }, '區間低 ' + fmt(payload.recentLow))),
+      el('div', { class: 'result-card' },
+        el('h3', {}, 'Δ = 基準 − 低'),
+        el('div', { class: 'big' }, fmt(payload.delta)),
+        el('div', { class: 'sub' }, '用來推三檔目標')),
+    )
+  );
+  r.appendChild(overview);
+
+  // ---- 波浪目標 ----
+  const waveSec = el('section', { class: 'panel' },
+    el('h2', {}, '🌊 波浪三檔目標'),
+    el('div', { class: 'method' },
+      '公式：', el('code', {}, '基準 + Δ × 1.5 / 2 / 2.5')
+    ),
+    el('div', { class: 'targets-row', style: 'margin-top:12px;' },
+      ...waveTargets.map(t => {
+        const isHit = hits.has(t.val);
+        return el('div', { class: 'target-cell ' + (isHit ? 'hit' : '') },
+          el('div', { class: 'mul' }, '×' + t.mul),
+          el('div', { class: 'val' }, fmt(t.val)),
+          isHit ? el('div', { class: 'sub', style: 'color:var(--buy);font-weight:600;' }, '✓ 共識') : null,
+        );
+      })
+    )
+  );
+  r.appendChild(waveSec);
+
+  // ---- 外資目標 ----
+  if (payload.foreignCost.cost) {
+    const fc = payload.foreignCost;
+    const foreignSec = el('section', { class: 'panel' },
+      el('h2', {}, '💼 外資成本目標'),
+      el('div', { class: 'result-grid' },
+        el('div', { class: 'result-card' },
+          el('h3', {}, '近期加權成本（' + fc.windowDays + '日 VWAP）'),
+          el('div', { class: 'big' }, fmt(fc.cost)),
+          el('div', { class: 'sub' }, `淨買 ${fc.netBuyDays} 天 / ${fc.netBuyLots.toLocaleString()} 張`)
+        ),
+        el('div', { class: 'result-card', style: 'grid-column:span 2;' },
+          el('h3', {}, '三檔目標（成本 × 1.2 / 1.4 / 1.7）'),
+          el('div', { class: 'targets-row' },
+            ...fTargets.map(t => {
+              const isHit = hits.has(t.val);
+              return el('div', { class: 'target-cell ' + (isHit ? 'hit' : '') },
+                el('div', { class: 'mul' }, '×' + t.mul),
+                el('div', { class: 'val' }, fmt(t.val)),
+                isHit ? el('div', { class: 'sub', style: 'color:var(--buy);font-weight:600;' }, '✓ 共識') : null,
+              );
+            })
+          )
+        )
+      ),
+      el('div', { class: 'method', style: 'margin-top:10px;' },
+        'VWAP proxy：用「每天收盤價 × 當日外資淨買張數」加權平均，',
+        '假設外資買賣都打在收盤價附近。區間越短越接近「近期成本」，越長越接近「主力部位成本」。'
+      )
+    );
+    r.appendChild(foreignSec);
+  } else {
+    r.appendChild(el('section', { class: 'panel' },
+      el('h2', {}, '💼 外資成本'),
+      el('div', { class: 'status warn' }, '近期 ' + payload.windowDays + ' 日沒有外資淨買天，無法估算加權成本。')
+    ));
+  }
+
+  // ---- 共識價 ----
+  if (payload.overlap.length) {
+    const cons = payload.overlap.map(o => o.consensus);
+    const consensusSec = el('section', { class: 'panel' },
+      el('h2', {}, '✅ 兩條腿共識價'),
+      el('div', { class: 'result-grid' },
+        ...cons.map(c => el('div', { class: 'result-card consensus' },
+          el('h3', {}, '共識目標'),
+          el('div', { class: 'big' }, fmt(c)),
+          el('div', { class: 'sub' }, '波浪 / 外資 都指向這附近'))
+        )
+      ),
+      el('div', { class: 'status success', style: 'margin-top:10px;' },
+        '🎯 共識價位最值得信：兩條腿算法都收斂到同一個區間，代表那個價位真的有「主力重力」。')
+    );
+    r.appendChild(consensusSec);
+  } else {
+    r.appendChild(el('section', { class: 'panel' },
+      el('h2', {}, '�️ 兩條腿沒對齊'),
+      el('div', { class: 'status warn' }, '波浪目標與外資目標差距 > 2%，訊號偏弱，建議保守或觀望。')
+    ));
+  }
+
+  // ---- 攤平 ----
+  if (payload.avgDownPlan) {
+    const p = payload.avgDownPlan;
+    const sec = el('section', { class: 'panel' },
+      el('h2', {}, '💰 攤平建議'),
+      p.ok
+        ? el('div', { class: 'result-grid' },
+            el('div', { class: 'result-card' },
+              el('h3', {}, '建議加碼股數'),
+              el('div', { class: 'big', style: 'color:var(--accent);' }, fmt(p.addShares, 0)),
+              el('div', { class: 'sub' }, `目前 ${fmt(payload.avgDownInputs.price)} → 目標 ${fmt(payload.avgDownInputs.target)}，差 ${fmt(p.gap)} 元`)),
+            el('div', { class: 'result-card' },
+              el('h3', {}, '加碼後均成本'),
+              el('div', { class: 'big' }, fmt(p.resultingAvgCost)),
+              el('div', { class: 'sub' }, `${p.resultingShares} 股`)),
+            el('div', { class: 'result-card' },
+              el('h3', {}, '總投入'),
+              el('div', { class: 'big' }, '$' + Math.round(p.totalInvestment).toLocaleString()),
+              el('div', { class: 'sub' }, `含加碼 $${Math.round(p.addCostTotal).toLocaleString()}`))
+          )
+        : el('div', { class: 'status warn' }, p.note)
+    );
+    r.appendChild(sec);
+  }
+}
+
+async function run() {
+  const btn = $('#runBtn');
+  const ticker = $('#ticker').value.trim();
+  if (!/^[0-9]{4,6}$/.test(ticker)) {
+    status('股票代號格式不對（應為 4-6 碼數字）', 'error');
+    return;
+  }
+  const stockName = $('#stockName').value.trim() || ticker;
+  const windowDays = parseInt($('#window').value, 10);
+  const highCustom = $('#highCustom').value ? parseFloat($('#highCustom').value) : null;
+  const lowCustom = $('#lowCustom').value ? parseFloat($('#lowCustom').value) : null;
+
+  const hold = $('#hold').value ? parseInt($('#hold').value, 10) : null;
+  const cost = $('#cost').value ? parseFloat($('#cost').value) : null;
+  const priceIn = $('#priceNow').value ? parseFloat($('#priceNow').value) : null;
+  const avgTarget = $('#avgTarget').value ? parseFloat($('#avgTarget').value) : null;
+
+  btn.disabled = true;
+  status(`<span class="loading-dot">⏳</span> 抓 ${ticker} K 線...`, 'loading');
+
+  try {
+    const candles = await fetchPrice(ticker, windowDays);
+    if (!candles.length) throw new Error('K 線沒有資料，確認代號是否正確');
+
+    const { ma5, lo, last } = recentBaseline(candles);
+    const baseline = highCustom != null ? highCustom : Math.round(ma5);
+    const low = lowCustom != null ? lowCustom : lo;
+    const delta = baseline - low;
+    const waveTargets = WAVE_MUL.map(m => Math.round(baseline + delta * m));
+
+    status(`<span class="loading-dot">⏳</span> 抓 ${ticker} 三大法人...`, 'loading');
+    const inst = await fetchInstitutional(ticker, windowDays);
+    const priceByDate = Object.fromEntries(candles.map(c => [c.date, c.close]));
+    const fcost = computeForeignCost(priceByDate, inst, windowDays);
+    const foreignTargets = fcost.cost ? FOREIGN_MUL.map(m => Math.round(fcost.cost * m)) : [];
+    const overlap = findOverlap(waveTargets, foreignTargets);
+
+    let avgDown = null, avgDownInputs = null;
+    if (hold != null && cost != null && avgTarget != null) {
+      const price = priceIn != null ? priceIn : last;
+      avgDown = avgDownPlan(hold, cost, price, avgTarget);
+      avgDownInputs = { hold, cost, price, target: avgTarget };
+    }
+
+    const payload = {
+      ticker,
+      name: stockName,
+      asOfDate: candles[candles.length - 1].date,
+      lastClose: last,
+      baseline: { value: baseline, source: highCustom != null ? 'manual' : 'MA5' },
+      recentLow: low,
+      windowDays,
+      delta,
+      waveTargets,
+      foreignCost: fcost,
+      foreignTargets,
+      overlap,
+      avgDownPlan: avgDown,
+      avgDownInputs,
+    };
+
+    clearStatus();
+    renderResults(payload);
+  } catch (e) {
+    status(`� ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function reset() {
+  $('#highCustom').value = '';
+  $('#lowCustom').value = '';
+  $('#hold').value = '';
+  $('#cost').value = '';
+  $('#priceNow').value = '';
+  $('#avgTarget').value = '';
+  $('#status').innerHTML = '';
+  $('#results').innerHTML = '';
+}
+
+// theme
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('theme', t); } catch (_) {}
+}
+applyTheme(localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+$('#theme-toggle').addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+
+$('#runBtn').addEventListener('click', run);
+$('#resetBtn').addEventListener('click', reset);
+$('#ticker').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+// 預設帶 3675 範例
+$('#stockName').value = '德微';
+$('#hold').value = '100';
+$('#cost').value = '400';
+$('#priceNow').value = '283';
+$('#avgTarget').value = '370';
+</script>
+</body>
+</html>
